@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Litz — Detalhes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050505;
+            --surface: #121212;
+            --accent: #7B2CBF;
+            --green: #3DDC97;
+            --text: #ffffff;
+            --text-dim: #b3b3b3;
+            --border: rgba(255,255,255,0.1);
+        }
+
+        * { margin:0; padding:0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+        .top-bar {
+            position: fixed; top: 0; width: 100%; z-index: 1000;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 5%; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+        }
+        .icon-btn {
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            border: 1px solid var(--border); color: white;
+            padding: 8px 16px; border-radius: 4px; font-size: 0.7rem;
+            font-weight: 700; cursor: pointer; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .icon-btn:hover { background: var(--accent); }
+
+        .hero-section {
+            height: 65vh; width: 100%; position: relative;
+            background-size: cover; background-position: center 20%;
+        }
+        .hero-section::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(0deg, var(--bg) 10%, rgba(5,5,5,0.4) 50%, transparent 100%);
+        }
+
+        .main-container {
+            position: relative; margin-top: -15vh;
+            padding: 0 5% 100px; z-index: 10;
+        }
+
+        .book-header { display: flex; gap: 40px; align-items: flex-end; margin-bottom: 40px; }
+        .main-cover {
+            width: 220px; aspect-ratio: 2/3; border-radius: 8px;
+            object-fit: cover; box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+            border: 1px solid var(--border);
+        }
+
+        .info-box h1 { font-size: 3rem; font-weight: 800; letter-spacing: -2px; line-height: 1; margin-bottom: 15px; text-transform: uppercase; }
+        .badges { display: flex; gap: 10px; margin-bottom: 20px; }
+        .badge { background: var(--border); padding: 5px 12px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .badge.category { background: var(--accent); }
+        .badge.status-breve { background: #333; color: #fff; }
+
+        .action-row { display: flex; gap: 15px; margin-bottom: 30px; }
+        .btn-main {
+            padding: 16px 32px; border-radius: 4px; border: none; font-weight: 800;
+            cursor: pointer; text-transform: uppercase; transition: 0.3s; font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+        .btn-read { background: var(--green); color: #000; flex: 1; max-width: 280px; }
+        .btn-read:disabled { background: #222; color: #666; cursor: not-allowed; }
+        .btn-save { background: rgba(255,255,255,0.05); color: #fff; border: 1px solid var(--border); }
+        .btn-save.active { background: #fff; color: #000; }
+
+        .stats-grid { display: flex; gap: 40px; padding: 25px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-bottom: 30px; }
+        .stat { display: flex; flex-direction: column; }
+        .stat-val { font-size: 1.1rem; font-weight: 800; }
+        .stat-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+        .synopsis-text { color: var(--text-dim); line-height: 1.8; font-size: 0.95rem; max-width: 800px; text-align: justify; }
+
+        .episodes-area { margin-top: 60px; }
+        .tabs-header { display: flex; gap: 30px; border-bottom: 1px solid var(--border); margin-bottom: 30px; }
+        .tab-link {
+            padding: 15px 0; cursor: pointer; color: var(--text-dim);
+            font-weight: 700; font-size: 0.8rem; position: relative; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .tab-link.active { color: var(--green); }
+        .tab-link.active::after {
+            content: ''; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--green);
+        }
+
+        .ep-list { display: grid; gap: 10px; }
+        .ep-item {
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 18px 25px; border-radius: 4px; display: flex; justify-content: space-between;
+            align-items: center; cursor: pointer; transition: 0.2s;
+        }
+        .ep-item.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+        .ep-item:hover:not(.disabled) { border-color: var(--accent); background: #181818; }
+        .ep-num { color: var(--green); font-weight: 800; font-size: 0.65rem; margin-bottom: 4px; display: block; text-transform: uppercase; }
+        .ep-name { font-weight: 600; font-size: 0.9rem; color: #fff; }
+        .read-tag { font-size: 0.7rem; font-weight: 800; color: var(--green); text-transform: uppercase; }
+
+        .dropdown {
+            position: absolute; right: 5%; top: 70px; background: #111;
+            border: 1px solid var(--border); border-radius: 4px; min-width: 180px;
+            overflow: hidden; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            z-index: 2000;
+        }
+        .dropdown.show { display: block; }
+        .drop-item { padding: 15px; font-size: 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border); text-transform: uppercase; font-weight: 600; }
+        .drop-item:hover { background: var(--accent); color: white; }
+
+        #toast-container { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; }
+        .toast {
+            background: #fff; color: #000; padding: 12px 24px; border-radius: 4px;
+            font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; margin-bottom: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+        }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px); z-index: 10000; display: none;
+            align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-content { background: var(--surface); border: 1px solid var(--border); padding: 30px; border-radius: 8px; width: 100%; max-width: 400px; }
+        .modal-content h2 { font-size: 1.2rem; margin-bottom: 15px; text-transform: uppercase; }
+        .modal-content textarea {
+            width: 100%; background: #000; border: 1px solid var(--border);
+            color: #fff; padding: 12px; border-radius: 4px; resize: none;
+            height: 100px; margin-bottom: 20px; outline: none;
+        }
+        .modal-actions { display: flex; gap: 10px; }
+
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeOut { to { opacity: 0; } }
+
+        @media (max-width: 768px) {
+            .book-header { flex-direction: column; align-items: center; text-align: center; }
+            .info-box h1 { font-size: 2rem; }
+            .stats-grid { gap: 25px; justify-content: center; }
+            .action-row { flex-direction: column; align-items: center; width: 100%; }
+            .btn-main { width: 100%; max-width: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal-content">
+            <h2>Denunciar Obra</h2>
+            <textarea id="reportReason" placeholder="Descreva o motivo da denúncia..."></textarea>
+            <div class="modal-actions">
+                <button class="btn-main" style="background: var(--border); color: #fff; flex: 1;" onclick="closeModal()">Cancelar</button>
+                <button class="btn-main" style="background: #ff4d4d; color: #fff; flex: 1;" id="confirmReport">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="top-bar">
+        <button class="icon-btn" onclick="history.back()">Voltar</button>
+        <button class="icon-btn" onclick="toggleDrop()">Opções</button>
+        <div class="dropdown" id="dropMenu">
+            <div class="drop-item" id="shareBtn">Compartilhar</div>
+            <div class="drop-item" id="reportBtn" style="color: #ff4d4d;">Denunciar</div>
+        </div>
+    </div>
+
+    <div class="hero-section" id="heroBg"></div>
+
+    <main class="main-container">
+        <div class="book-header">
+            <img src="" class="main-cover" id="bookCover">
+            <div class="info-box">
+                <div class="badges" id="badgeContainer">
+                    <span class="badge category" id="catLabel">Categoria</span>
+                    <span class="badge" id="originLabel">Litz Originals</span>
+                </div>
+                <h1 id="bookTitle">---</h1>
+                <p style="color: var(--text-dim); margin-bottom: 25px; font-size: 0.9rem;">Por <strong id="authorName" style="color: #fff;">---</strong></p>
+                
+                <div class="action-row">
+                    <button class="btn-main btn-read" id="btnMainAction" onclick="lerPrimeiro()">Começar Leitura</button>
+                    <button class="btn-main btn-save" id="saveBtn">Salvar na Lista</button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat"><span class="stat-val" id="valViews">0</span><span class="stat-label">Leituras</span></div>
+                    <div class="stat"><span class="stat-val" id="valLikes">0</span><span class="stat-label">Curtidas</span></div>
+                    <div class="stat"><span class="stat-val" id="valTemps">0</span><span class="stat-label">Temporadas</span></div>
+                </div>
+
+                <p class="synopsis-text" id="synopsis">Carregando descrição da obra...</p>
+            </div>
+        </div>
+
+        <section class="episodes-area">
+            <div class="tabs-header" id="seasonTabs"></div>
+            <div class="ep-list" id="epList"></div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, collection, query, orderBy, getDocs, setDoc, deleteDoc, updateDoc, increment, addDoc, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAt_l4DcDiXrCRzDkOtu8PeWoIwMk9Mj38",
+            authDomain: "litz-orignals.firebaseapp.com",
+            projectId: "litz-orignals",
+            storageBucket: "litz-orignals.firebasestorage.app",
+            messagingSenderId: "286693298991",
+            appId: "1:286693298991:web:a139c4637b86a4725a87da"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookId = urlParams.get('id');
+        let userUID = null;
+        let bookDataGlobal = null;
+        let unsubEpisodios = null;
+        let primeiraTempId = null;
+        let primeiroEpId = null;
+
+        // UI Helpers
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerText = msg;
+            container.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        window.toggleDrop = () => document.getElementById('dropMenu').classList.toggle('show');
+        window.closeModal = () => document.getElementById('reportModal').style.display = 'none';
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userUID = user.uid;
+                monitorarFavorito();
+            }
+            if(bookId) {
+                incrementarView();
+                monitorarDetalhesLivro();
+                monitorarTemporadas();
+            }
+        });
+
+        function incrementarView() {
+            updateDoc(doc(db, "livros", bookId), { views: increment(1) }).catch(e => {});
+        }
+
+        // 1. MONITORAR DETALHES (INCLUINDO "EM BREVE")
+        function monitorarDetalhesLivro() {
+            onSnapshot(doc(db, "livros", bookId), (snap) => {
+                if (snap.exists()) {
+                    bookDataGlobal = snap.data();
+                    const b = bookDataGlobal;
+                    
+                    document.getElementById('heroBg').style.backgroundImage = `url('${b.capa}')`;
+                    document.getElementById('bookCover').src = b.capa;
+                    document.getElementById('bookTitle').innerText = b.titulo;
+                    document.getElementById('authorName').innerText = b.autorNome;
+                    document.getElementById('synopsis').innerText = b.descricao;
+                    document.getElementById('catLabel').innerText = b.categorias ? b.categorias[0] : "Geral";
+                    document.getElementById('valViews').innerText = b.views || 0;
+                    document.getElementById('valLikes').innerText = b.likes || 0;
+
+                    // TRAVA "EM BREVE"
+                    const btnMain = document.getElementById('btnMainAction');
+                    if (b.status === "breve") {
+                        btnMain.innerText = "Disponível em Breve";
+                        btnMain.disabled = true;
+                        if(!document.getElementById('badgeBreve')) {
+                            const badge = document.createElement('span');
+                            badge.id = "badgeBreve";
+                            badge.className = "badge status-breve";
+                            badge.innerText = "Em Breve";
+                            document.getElementById('badgeContainer').appendChild(badge);
+                        }
+                    }
+
+                    if (!b.categorias?.includes("Litz Originals")) {
+                        document.getElementById('originLabel').style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // 2. TEMPORADAS
+        function monitorarTemporadas() {
+            const tempRef = collection(db, "livros", bookId, "temporadas");
+            onSnapshot(query(tempRef, orderBy("ordem", "asc")), (snap) => {
+                const tabs = document.getElementById('seasonTabs');
+                document.getElementById('valTemps').innerText = snap.size;
+                
+                if(snap.empty) {
+                    tabs.innerHTML = "";
+                    document.getElementById('epList').innerHTML = `<p style="color:var(--text-dim);">Conteúdo em produção.</p>`;
+                    return;
+                }
+
+                primeiraTempId = snap.docs[0].id;
+                const activeTabEl = tabs.querySelector('.active');
+                const activeTempId = activeTabEl ? activeTabEl.dataset.tempid : primeiraTempId;
+
+                tabs.innerHTML = "";
+                snap.forEach((tempDoc) => {
+                    const data = tempDoc.data();
+                    const btn = document.createElement('div');
+                    const isActive = tempDoc.id === activeTempId;
+                    btn.className = `tab-link ${isActive ? 'active' : ''}`;
+                    btn.innerText = data.titulo || `Temp ${data.ordem}`;
+                    btn.dataset.tempid = tempDoc.id;
+                    
+                    btn.onclick = () => {
+                        document.querySelectorAll('.tab-link').forEach(t => t.classList.remove('active'));
+                        btn.classList.add('active');
+                        monitorarEpisodios(tempDoc.id);
+                    };
+                    tabs.appendChild(btn);
+                    if(isActive) monitorarEpisodios(tempDoc.id);
+                });
+            });
+        }
+
+        // 3. EPISÓDIOS
+        function monitorarEpisodios(tempId) {
+            const epList = document.getElementById('epList');
+            if(unsubEpisodios) unsubEpisodios();
+
+            const q = query(collection(db, "livros", bookId, "temporadas", tempId, "episodios"), orderBy("ordem", "asc"));
+            unsubEpisodios = onSnapshot(q, (snap) => {
+                epList.innerHTML = "";
+                if(snap.empty) {
+                    epList.innerHTML = `<p style="color:var(--text-dim);">Nenhum capítulo nesta temporada.</p>`;
+                    return;
+                }
+
+                if(tempId === primeiraTempId) primeiroEpId = snap.docs[0].id;
+
+                snap.forEach(docEp => {
+                    const ep = docEp.data();
+                    const isBreve = bookDataGlobal?.status === "breve";
+                    
+                    epList.innerHTML += `
+                        <div class="ep-item ${isBreve ? 'disabled' : ''}" onclick="${isBreve ? '' : `location.href='ler.html?id=${bookId}&temp=${tempId}&ep=${docEp.id}'`}">
+                            <div>
+                                <span class="ep-num">Capítulo ${ep.ordem}</span>
+                                <span class="ep-name">${ep.titulo}</span>
+                            </div>
+                            <span class="read-tag">${isBreve ? 'Bloqueado' : 'Ler'}</span>
+                        </div>
+                    `;
+                });
+            });
+        }
+
+        window.lerPrimeiro = () => {
+            if (bookDataGlobal?.status === "breve") return;
+            if (primeiraTempId && primeiroEpId) {
+                location.href = `ler.html?id=${bookId}&temp=${primeiraTempId}&ep=${primeiroEpId}`;
+            } else {
+                showToast("Nenhum capítulo disponível.");
+            }
+        };
+
+        // 4. FAVORITOS
+        function monitorarFavorito() {
+            if(!userUID || !bookId) return;
+            onSnapshot(doc(db, "users", userUID, "biblioteca", bookId), (snap) => {
+                const btn = document.getElementById('saveBtn');
+                if(snap.exists()) {
+                    btn.innerText = "Na sua lista";
+                    btn.classList.add('active');
+                } else {
+                    btn.innerText = "Salvar na lista";
+                    btn.classList.remove('active');
+                }
+            });
+        }
+
+        document.getElementById('saveBtn').onclick = async () => {
+            if(!userUID) return showToast("Faça login para salvar");
+            const ref = doc(db, "users", userUID, "biblioteca", bookId);
+            if(document.getElementById('saveBtn').classList.contains('active')) {
+                await deleteDoc(ref);
+                showToast("Removido da lista");
+            } else {
+                await setDoc(ref, { id: bookId, salvoEm: serverTimestamp() });
+                showToast("Salvo com sucesso!");
+            }
+        };
+
+        // OPÇÕES
+        document.getElementById('shareBtn').onclick = async () => {
+            try {
+                await navigator.share({ title: bookDataGlobal?.titulo, url: window.location.href });
+            } catch (e) {
+                navigator.clipboard.writeText(window.location.href);
+                showToast("Link copiado!");
+            }
+        };
+
+        document.getElementById('reportBtn').onclick = () => {
+            if(!userUID) return showToast("Faça login primeiro");
+            document.getElementById('reportModal').style.display = 'flex';
+        };
+
+        document.getElementById('confirmReport').onclick = async () => {
+            const motivo = document.getElementById('reportReason').value;
+            if(!motivo) return;
+            await addDoc(collection(db, "denuncias"), {
+                bookId, userId: userUID, motivo, data: serverTimestamp()
+            });
+            showToast("Denúncia enviada");
+            closeModal();
+        };
+
+    </script>
+</body>
+</html>

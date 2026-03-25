@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Litz — Plataforma Digital de Leitura</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --card-bg: #1E1E1E;
+            --text-main: #EAEAEA;
+            --text-dim: #A0A0A0;
+            --primary-green: #3DDC97;
+            --accent-purple: #7B2CBF;
+            --accent-purple-hover: #9D4EDD;
+            --overlay: rgba(0, 0, 0, 0.9);
+            --border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            transition: opacity 0.6s ease;
+        }
+
+        #canvas-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            filter: blur(100px);
+            opacity: 0.5;
+        }
+
+        .welcome-content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            max-width: 450px;
+            padding: 40px 20px;
+            animation: slideUp 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo-litz {
+            font-size: 6.5rem;
+            font-weight: 700;
+            letter-spacing: -5px;
+            background: linear-gradient(180deg, #FFFFFF 30%, #7B2CBF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        .tagline {
+            font-size: 1.15rem;
+            font-weight: 300;
+            color: var(--text-dim);
+            margin-bottom: 50px;
+            line-height: 1.6;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: var(--accent-purple);
+            color: #FFFFFF;
+            box-shadow: 0 10px 30px rgba(123, 44, 191, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-purple-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(123, 44, 191, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent-purple);
+        }
+
+        .welcome-footer {
+            margin-top: 50px;
+            font-size: 0.75rem;
+            color: #666;
+            line-height: 1.8;
+        }
+
+        .welcome-footer span {
+            cursor: pointer;
+            color: var(--text-dim);
+            text-decoration: none;
+            border-bottom: 1px solid #444;
+            transition: all 0.3s;
+        }
+
+        .welcome-footer span:hover {
+            color: var(--primary-green);
+            border-color: var(--primary-green);
+        }
+
+        .copyright-text {
+            margin-top: 20px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        /* --- MODAL SYSTEM --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--overlay);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(15px);
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 700px;
+            max-height: 85vh;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            animation: modalFade 0.3s ease;
+        }
+
+        @keyframes modalFade {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            padding: 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--primary-green);
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.8rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 40px;
+            overflow-y: auto;
+            color: var(--text-dim);
+            line-height: 1.8;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+
+        .modal-body h3 {
+            color: var(--text-main);
+            margin: 30px 0 15px 0;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .modal-body p { margin-bottom: 15px; }
+
+        .modal-body ul {
+            margin-bottom: 20px;
+            padding-left: 20px;
+        }
+
+        .modal-body li { margin-bottom: 10px; }
+
+        .modal-body hr {
+            border: none;
+            border-top: 1px solid var(--border-color);
+            margin: 30px 0;
+        }
+
+        .modal-body::-webkit-scrollbar { width: 4px; }
+        .modal-body::-webkit-scrollbar-thumb { background: #333; }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas-bg"></canvas>
+
+    <div class="welcome-content">
+        <h1 class="logo-litz">LITZ</h1>
+        <p class="tagline">ONDE HISTÓRIAS GANHAM VIDA.<br>DESCUBRA MUNDOS E PUBLIQUE SUAS IDEIAS.</p>
+        
+        <div class="btn-group">
+            <button onclick="navegar('cadastro')" class="btn btn-primary">Começar agora</button>
+            <button onclick="navegar('login')" class="btn btn-secondary">Já tenho conta</button>
+        </div>
+
+        <div class="welcome-footer">
+            AO CONTINUAR, VOCÊ CONCORDA COM NOSSOS <br>
+            <span onclick="openModal('terms')">TERMOS DE USO</span> E <span onclick="openModal('privacy')">POLÍTICA DE PRIVACIDADE</span>
+            <span class="copyright-text">© 2026 LITZ. TODOS OS DIREITOS RESERVADOS.</span>
+        </div>
+    </div>
+
+    <div id="modal-terms" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>TERMOS DE USO</h2>
+                <button class="close-modal" onclick="closeModals()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Última atualização: 2026</p>
+                
+                <h3>1. Aceitação dos Termos</h3>
+                <p>Ao acessar ou utilizar a plataforma Litz, o usuário concorda com estes Termos de Uso. Caso não concorde, não deverá utilizar a plataforma.</p>
+                <hr>
+                <h3>2. Sobre a Plataforma</h3>
+                <p>O Litz é uma plataforma digital que permite a leitura e publicação de obras literárias, com sistema de curadoria para garantir qualidade e segurança.</p>
+                <hr>
+                <h3>3. Cadastro e Conta</h3>
+                <ul>
+                    <li>O usuário deve fornecer informações verdadeiras.</li>
+                    <li>É responsável pela segurança da sua conta.</li>
+                    <li>O Litz pode suspender ou encerrar contas que violem estes termos.</li>
+                </ul>
+                <hr>
+                <h3>4. Uso da Plataforma</h3>
+                <p>O usuário concorda em: não utilizar a plataforma para fins ilegais; não tentar explorar falhas do sistema; respeitar outros usuários.</p>
+                <hr>
+                <h3>5. Conteúdo do Usuário</h3>
+                <p>Usuários podem enviar conteúdos (livros, histórias, textos), sendo responsáveis por tudo que publicam.</p>
+                <hr>
+                <h3>6. Direitos Autorais</h3>
+                <p>O usuário declara que: é o autor do conteúdo ou possui direitos legais; o conteúdo não infringe direitos de terceiros. O usuário mantém os direitos sobre sua obra.</p>
+                <hr>
+                <h3>7. Licença para o Litz</h3>
+                <p>Ao publicar conteúdo, o usuário concede ao Litz uma licença não exclusiva para: exibir o conteúdo na plataforma; organizar e promover dentro do sistema.</p>
+                <hr>
+                <h3>8. Curadoria e Moderação</h3>
+                <p>Todo conteúdo pode ser analisado antes da publicação. O Litz pode: aprovar ou recusar conteúdos; remover conteúdos a qualquer momento.</p>
+                <hr>
+                <h3>9. Conteúdos Proibidos</h3>
+                <p>É proibido publicar: conteúdo ilegal; plágio; discurso de ódio; conteúdo ofensivo ou prejudicial; spam.</p>
+                <hr>
+                <h3>10. Remoção de Conteúdo</h3>
+                <p>O Litz pode remover conteúdos que violem estes termos. O usuário pode solicitar a remoção de sua própria obra.</p>
+                <hr>
+                <h3>11. Limitação de Responsabilidade</h3>
+                <p>O Litz não se responsabiliza por conteúdos publicados por usuários.</p>
+                <hr>
+                <h3>12. Modificações</h3>
+                <p>Estes termos podem ser alterados a qualquer momento.</p>
+                <hr>
+                <h3>13. Encerramento de Conta</h3>
+                <p>O Litz pode suspender ou encerrar contas que violem as regras.</p>
+                <hr>
+                <h3>14. Contato</h3>
+                <p>Para dúvidas, entre em contato com a plataforma.</p>
+                <hr>
+                <p style="text-align: center; font-size: 0.7rem;">© 2026 LITZ — TODOS OS DIREITOS RESERVADOS.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-privacy" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>POLÍTICA DE PRIVACIDADE</h2>
+                <button class="close-modal" onclick="closeModals()">✕</button>
+            </div>
+            <div class="modal-body">
+                <p>Última atualização: 2026</p>
+                
+                <h3>1. Informações Coletadas</h3>
+                <p>O Litz pode coletar: Nome; Email; Dados de login; Preferências (livros, favoritos); Dados de uso da plataforma.</p>
+                <hr>
+                <h3>2. Como Usamos as Informações</h3>
+                <p>As informações são utilizadas para: criar e gerenciar contas; melhorar a experiência do usuário; personalizar conteúdos; garantir segurança.</p>
+                <hr>
+                <h3>3. Armazenamento de Dados</h3>
+                <p>Os dados são armazenados em serviços seguros, como o Firebase. Medidas de segurança são aplicadas para proteger as informações.</p>
+                <hr>
+                <h3>4. Compartilhamento de Dados</h3>
+                <p>O Litz NÃO vende dados dos usuários. Dados podem ser compartilhados apenas quando: necessário para funcionamento do sistema; exigido por lei.</p>
+                <hr>
+                <h3>5. Cookies e Tecnologias</h3>
+                <p>Podemos usar cookies para: manter login ativo; melhorar navegação.</p>
+                <hr>
+                <h3>6. Direitos do Usuário</h3>
+                <p>O usuário pode: acessar seus dados; solicitar exclusão da conta; atualizar informações.</p>
+                <hr>
+                <h3>7. Conteúdo Publicado</h3>
+                <p>Conteúdos enviados pelos usuários podem ser visíveis publicamente dentro da plataforma.</p>
+                <hr>
+                <h3>8. Segurança</h3>
+                <p>O Litz utiliza medidas para proteger os dados, mas não garante segurança absoluta.</p>
+                <hr>
+                <h3>9. Alterações nesta Política</h3>
+                <p>A política pode ser atualizada a qualquer momento.</p>
+                <hr>
+                <h3>10. Contato</h3>
+                <p>Para dúvidas sobre privacidade, entre em contato com a plataforma.</p>
+                <hr>
+                <p style="text-align: center; font-size: 0.7rem;">© 2026 LITZ — TODOS OS DIREITOS RESERVADOS.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            initParticles();
+        };
+
+        function navegar(destino) {
+            localStorage.setItem("jaViuWelcome", "true");
+            document.body.style.opacity = "0";
+            setTimeout(() => {
+                window.location.href = destino + ".html";
+            }, 600);
+        }
+
+        function openModal(type) {
+            document.getElementById('modal-' + type).style.display = 'flex';
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        }
+
+        window.onclick = function(event) {
+            if (event.target.className === 'modal-overlay') closeModals();
+        }
+
+        function initParticles() {
+            const canvas = document.getElementById('canvas-bg');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const colors = ['#7B2CBF', '#3DDC97', '#121212'];
+            
+            for(let i=0; i<3; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    radius: Math.random() * 250 + 150,
+                    color: colors[i],
+                    vx: Math.random() * 1 - 0.5,
+                    vy: Math.random() * 1 - 0.5
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if(p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                    if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Litz — Explorar Histórias</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --card-bg: #111111;
+            --text-main: #FFFFFF;
+            --text-dim: #A0A0A0;
+            --accent-purple: #7B2CBF;
+            --primary-green: #3DDC97;
+            --nav-bg: rgba(5, 5, 5, 0.95);
+            --border: rgba(255, 255, 255, 0.08);
+            --transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* --- NAVBAR --- */
+        nav {
+            position: fixed;
+            top: 0; width: 100%; height: 80px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 5%; z-index: 1100;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.9) 0%, transparent 100%);
+            transition: var(--transition);
+        }
+        nav.scrolled {
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            height: 70px;
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-logo { font-weight: 800; font-size: 2rem; letter-spacing: -2px; color: var(--text-main); text-decoration: none; }
+        .nav-right { display: flex; align-items: center; gap: 20px; }
+        
+        .search-container { position: relative; }
+        .search-bar {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 10px 15px 10px 40px;
+            border-radius: 4px;
+            color: #fff; width: 220px;
+            font-size: 0.85rem; transition: var(--transition);
+            outline: none;
+        }
+        .search-bar:focus { width: 300px; border-color: var(--accent-purple); background: rgba(255,255,255,0.1); }
+        
+        .profile-btn {
+            width: 38px; height: 38px; border-radius: 4px;
+            background: var(--accent-purple); cursor: pointer;
+            border: 1px solid var(--border); transition: var(--transition);
+            background-size: cover; background-position: center;
+        }
+
+        /* --- SEARCH OVERLAY --- */
+        #searchOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 0;
+            background: var(--bg-dark); z-index: 1050; overflow: hidden;
+            transition: height 0.5s cubic-bezier(0.77, 0, 0.175, 1);
+            padding: 100px 5% 0;
+        }
+        #searchOverlay.active { height: 100vh; overflow-y: auto; }
+        .search-results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 25px; margin-top: 20px; padding-bottom: 50px; }
+        .search-header { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: var(--primary-green); margin-top: 30px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+
+        /* --- HERO --- */
+        #hero {
+            height: 80vh; width: 100%; position: relative;
+            display: flex; align-items: center; padding: 0 5%;
+            background-size: cover; background-position: center 20%;
+            transition: background 0.8s ease;
+        }
+        #hero::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to right, var(--bg-dark) 10%, transparent 80%),
+                        linear-gradient(to top, var(--bg-dark) 5%, transparent 50%);
+        }
+        .hero-content { position: relative; z-index: 10; max-width: 600px; }
+        .hero-tag { font-size: 0.7rem; font-weight: 900; color: var(--primary-green); text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px; display: block; }
+        .hero-title { font-size: 4.5rem; font-weight: 800; line-height: 0.9; letter-spacing: -3px; margin-bottom: 20px; text-transform: uppercase; }
+        .hero-desc { color: var(--text-dim); font-size: 1rem; margin-bottom: 30px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .hero-btns { display: flex; gap: 15px; }
+        .btn-hero { padding: 14px 30px; border-radius: 4px; font-weight: 800; text-transform: uppercase; cursor: pointer; border: none; transition: var(--transition); font-size: 0.85rem; letter-spacing: 1px; }
+        .btn-read { background: var(--primary-green); color: #000; }
+        .btn-fav { background: rgba(255,255,255,0.1); color: #fff; backdrop-filter: blur(10px); border: 1px solid var(--border); }
+        .btn-fav.active { background: #fff; color: #000; }
+
+        /* --- SHELVES --- */
+        .shelf { padding: 40px 0 0 5%; }
+        .shelf-title { font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 15px; color: var(--text-main); }
+        .slider { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 25px; scroll-behavior: smooth; }
+        .slider::-webkit-scrollbar { display: none; }
+
+        /* --- CARDS & ETIQUETAS --- */
+        .book-card { flex: 0 0 170px; cursor: pointer; transition: var(--transition); position: relative; }
+        .book-card:hover { transform: translateY(-8px); }
+        .book-cover-wrapper { position: relative; width: 100%; aspect-ratio: 2/3; border-radius: 6px; overflow: hidden; box-shadow: 0 15px 30px rgba(0,0,0,0.5); border: 1px solid var(--border); }
+        .book-cover { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+        .book-card:hover .book-cover { transform: scale(1.05); }
+
+        /* Badges */
+        .badge {
+            position: absolute; top: 10px; left: 10px; padding: 4px 8px; 
+            font-size: 0.6rem; font-weight: 900; text-transform: uppercase; 
+            border-radius: 3px; z-index: 5; letter-spacing: 1px;
+        }
+        .badge-original { background: var(--accent-purple); color: #fff; }
+        .badge-breve { background: #333; color: #fff; }
+        .badge-new { background: var(--primary-green); color: #000; }
+
+        .book-card-title { font-size: 0.85rem; font-weight: 700; margin-top: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; }
+        .book-card-author { font-size: 0.7rem; color: var(--text-dim); font-weight: 500; }
+
+        /* --- SKELETON --- */
+        .skeleton { background: #111; border-radius: 4px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+
+        footer { padding: 80px 5% 40px; text-align: center; border-top: 1px solid var(--border); margin-top: 50px; font-size: 0.65rem; color: #333; letter-spacing: 3px; }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.8rem; }
+            .search-bar { width: 140px; }
+            .search-bar:focus { width: 200px; }
+            .book-card { flex: 0 0 140px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="searchOverlay">
+        <h4 class="search-header">Livros Encontrados</h4>
+        <div class="search-results-grid" id="bookSearchResults"></div>
+    </div>
+
+    <nav id="mainNav">
+        <a href="explorar.html" class="nav-logo">LITZ</a>
+        <div class="nav-right">
+            <div class="search-container">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Buscar título...">
+            </div>
+            <div class="profile-btn" id="navProfile" onclick="location.href='perfil.html'"></div>
+        </div>
+    </nav>
+
+    <header id="hero">
+        <div class="hero-content" id="heroData">
+            <div class="skeleton" style="width: 300px; height: 50px; margin-bottom: 20px;"></div>
+            <div class="skeleton" style="width: 100%; height: 80px; margin-bottom: 30px;"></div>
+            <div class="hero-btns">
+                <div class="skeleton" style="width: 140px; height: 45px;"></div>
+                <div class="skeleton" style="width: 140px; height: 45px;"></div>
+            </div>
+        </div>
+    </header>
+
+    <main id="homeContent">
+        <section class="shelf">
+            <h2 class="shelf-title">Original Litz</h2>
+            <div class="slider" id="shelfOriginals"></div>
+        </section>
+
+        <section class="shelf">
+            <h2 class="shelf-title">Bombando</h2>
+            <div class="slider" id="shelfTop10"></div>
+        </section>
+
+        <section class="shelf">
+            <h2 class="shelf-title">Disponível em Breve</h2>
+            <div class="slider" id="shelfBreve"></div>
+        </section>
+
+        <section class="shelf">
+            <h2 class="shelf-title">Novos Lançamentos</h2>
+            <div class="slider" id="shelfNovos"></div>
+        </section>
+        
+        </main>
+
+    <footer>© 2026 LITZ PLATAFORMA DIGITAL — TODOS OS DIREITOS RESERVADOS</footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, query, where, orderBy, limit, getDocs, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAt_l4DcDiXrCRzDkOtu8PeWoIwMk9Mj38",
+            authDomain: "litz-orignals.firebaseapp.com",
+            projectId: "litz-orignals",
+            storageBucket: "litz-orignals.firebasestorage.app",
+            messagingSenderId: "286693298991",
+            appId: "1:286693298991:web:a139c4637b86a4725a87da"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let userUID = null;
+        let currentHeroId = null;
+        let unsubFav = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                userUID = user.uid;
+                monitorarPerfilNav();
+            }
+            iniciarTempoReal();
+        });
+
+        function monitorarPerfilNav() {
+            onSnapshot(doc(db, "users", userUID), (docSnap) => {
+                if(docSnap.exists() && docSnap.data().foto) {
+                    document.getElementById('navProfile').style.backgroundImage = `url('${docSnap.data().foto}')`;
+                }
+            });
+        }
+
+        function iniciarTempoReal() {
+            monitorarDestaque();
+            
+            // Prateleiras Fixas Otimizadas
+            monitorarPrateleira("shelfOriginals", query(collection(db, "livros"), where("categorias", "array-contains", "Litz Originals"), limit(10)));
+            monitorarPrateleira("shelfTop10", query(collection(db, "livros"), orderBy("views", "desc"), limit(10)));
+            monitorarPrateleira("shelfBreve", query(collection(db, "livros"), where("status", "==", "breve"), limit(10)));
+            monitorarPrateleira("shelfNovos", query(collection(db, "livros"), orderBy("dataCriacao", "desc"), limit(10)));
+            
+            // Gerar Categorias Automáticas
+            monitorarCategorias();
+        }
+
+        // --- HERO EM TEMPO REAL ---
+        function monitorarDestaque() {
+            const q = query(collection(db, "livros"), where("destaque", "==", true), limit(1));
+            onSnapshot(q, (snap) => {
+                if (snap.empty) {
+                    getDocs(query(collection(db, "livros"), limit(1))).then(renderHero);
+                } else {
+                    renderHero(snap);
+                }
+            });
+        }
+
+        function renderHero(snap) {
+            if(snap.empty) return;
+            const d = snap.docs[0].data();
+            currentHeroId = snap.docs[0].id;
+            
+            const tagDestaque = d.categorias?.includes("Litz Originals") ? "ORIGINAL LITZ" : "RECOMENDADO PARA VOCÊ";
+
+            document.getElementById('hero').style.backgroundImage = `url('${d.capa}')`;
+            document.getElementById('heroData').innerHTML = `
+                <span class="hero-tag">${tagDestaque}</span>
+                <h1 class="hero-title">${d.titulo}</h1>
+                <p class="hero-desc">${d.descricao}</p>
+                <div class="hero-btns">
+                    <button class="btn-hero btn-read" onclick="location.href='livro.html?id=${currentHeroId}'">Ver Detalhes</button>
+                    <button class="btn-hero btn-fav" id="btnFavHero">Favoritar</button>
+                </div>
+            `;
+            document.getElementById('btnFavHero').onclick = toggleFavoritoHero;
+            monitorarFavoritoEstado();
+        }
+
+        // --- FAVORITOS ---
+        function monitorarFavoritoEstado() {
+            if(!userUID || !currentHeroId) return;
+            if(unsubFav) unsubFav();
+            const ref = doc(db, "users", userUID, "biblioteca", currentHeroId);
+            unsubFav = onSnapshot(ref, (f) => {
+                const btn = document.getElementById('btnFavHero');
+                if(btn) f.exists() ? btn.classList.add('active') : btn.classList.remove('active');
+            });
+        }
+
+        async function toggleFavoritoHero() {
+            if(!userUID) return alert("Faça login primeiro!");
+            const ref = doc(db, "users", userUID, "biblioteca", currentHeroId);
+            const btn = document.getElementById('btnFavHero');
+            if(btn.classList.contains('active')) await deleteDoc(ref);
+            else await setDoc(ref, { id: currentHeroId, salvoEm: new Date() });
+        }
+
+        // --- SISTEMA DE PRATELEIRAS ---
+        function monitorarPrateleira(id, q) {
+            onSnapshot(q, (snap) => {
+                const container = document.getElementById(id);
+                if(container) {
+                    container.innerHTML = "";
+                    snap.forEach(doc => { container.innerHTML += renderCard(doc.id, doc.data()); });
+                    if(snap.empty && container.closest('.shelf')) container.closest('.shelf').style.display = 'none';
+                    else if(container.closest('.shelf')) container.closest('.shelf').style.display = 'block';
+                }
+            });
+        }
+
+        function monitorarCategorias() {
+            // Lista expandida de gêneros
+            const cats = ["Fantasia", "Romance", "Suspense", "Terror", "Sci-Fi", "Aventura", "Drama"];
+            const mainContent = document.getElementById('homeContent');
+
+            cats.forEach(cat => {
+                const q = query(collection(db, "livros"), where("categorias", "array-contains", cat), limit(8));
+                const shelfId = `dyn_shelf_${cat.replace(/\s+/g, '')}`;
+                const sectionId = `dyn_sec_${shelfId}`;
+                
+                onSnapshot(q, (snap) => {
+                    let container = document.getElementById(shelfId);
+                    if (!snap.empty) {
+                        if (!container) {
+                            const shelfHtml = `
+                                <section class="shelf" id="${sectionId}">
+                                    <h2 class="shelf-title">${cat}</h2>
+                                    <div class="slider" id="${shelfId}"></div>
+                                </section>`;
+                            mainContent.insertAdjacentHTML('beforeend', shelfHtml);
+                            container = document.getElementById(shelfId);
+                        }
+                        container.innerHTML = "";
+                        snap.forEach(doc => { container.innerHTML += renderCard(doc.id, doc.data()); });
+                    } else if (container) {
+                        document.getElementById(sectionId).remove();
+                    }
+                });
+            });
+        }
+
+        // --- TEMPLATE DOS CARDS COM ETIQUETAS ---
+        function renderCard(id, d) {
+            let badge = "";
+            if (d.status === "breve") badge = `<span class="badge badge-breve">Em Breve</span>`;
+            else if (d.categorias?.includes("Litz Originals")) badge = `<span class="badge badge-original">Original</span>`;
+            else if (d.isNew) badge = `<span class="badge badge-new">Novo</span>`;
+
+            return `
+                <div class="book-card" onclick="location.href='livro.html?id=${id}'">
+                    <div class="book-cover-wrapper">
+                        ${badge}
+                        <img src="${d.capa}" class="book-cover" loading="lazy">
+                    </div>
+                    <p class="book-card-title">${d.titulo}</p>
+                    <p class="book-card-author">${d.autorNome}</p>
+                </div>`;
+        }
+
+        // --- BUSCA ---
+        const searchInput = document.getElementById('searchInput');
+        const overlay = document.getElementById('searchOverlay');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', (e) => {
+            const t = e.target.value.toLowerCase().trim();
+            clearTimeout(searchTimeout);
+            if (t.length > 2) {
+                overlay.classList.add('active');
+                searchTimeout = setTimeout(async () => {
+                    const q = query(collection(db, "livros"), limit(50));
+                    const snap = await getDocs(q);
+                    const results = document.getElementById('bookSearchResults');
+                    results.innerHTML = "";
+                    snap.forEach(doc => {
+                        const d = doc.data();
+                        if(d.titulo.toLowerCase().includes(t)) results.innerHTML += renderCard(doc.id, d);
+                    });
+                    if(results.innerHTML === "") results.innerHTML = "<p style='color:var(--text-dim)'>Nenhuma história encontrada.</p>";
+                }, 300);
+            } else {
+                overlay.classList.remove('active');
+            }
+        });
+
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('mainNav');
+            window.scrollY > 30 ? nav.classList.add('scrolled') : nav.classList.remove('scrolled');
+        });
+
+    </script>
+</body>
+</html>
