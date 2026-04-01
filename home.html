@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Litz Profile | Identity & Social Ecosystem</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #050505;
+            --surface: rgba(20, 20, 22, 0.85);
+            --surface-light: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #ffffff;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-main: #ffffff;
+            --text-dim: #94a3b8;
+            --error: #ff4d4d;
+            --success: #00e676;
+            --warning: #fbbf24;
+            --nav-height: 75px;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        /* --- BASE RESET --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            background: var(--bg); color: var(--text-main); 
+            font-family: 'Inter', sans-serif; overflow-x: hidden; 
+            padding-bottom: var(--nav-height); min-height: 100vh;
+        }
+
+        /* --- BACKGROUND --- */
+        .bg-canvas { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at 50% 0%, #1a1a2e 0%, #050505 100%); }
+        .orb { position: absolute; width: 400px; height: 400px; background: var(--accent); filter: blur(120px); opacity: 0.15; border-radius: 50%; }
+
+        /* --- TYPOGRAPHY & UTILS --- */
+        h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .section-title { font-size: 1.8rem; margin-bottom: 25px; font-weight: 800; letter-spacing: -1px; }
+        .empty-state { text-align: center; color: var(--text-dim); margin-top: 60px; padding: 20px; }
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; margin: 0 auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- TAB BAR (NAVEGAÇÃO MÓVEL) --- */
+        .tab-bar {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: var(--nav-height);
+            background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-top: 1px solid var(--border); display: flex; justify-content: space-around;
+            align-items: center; z-index: 900; padding-bottom: env(safe-area-inset-bottom);
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-dim); cursor: pointer; transition: var(--transition); flex: 1; padding: 10px 0; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item svg { width: 24px; height: 24px; transition: transform 0.2s; }
+        .nav-item.active svg { transform: translateY(-2px); }
+        .nav-item span { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* --- VIEWS --- */
+        .view { display: none; animation: fadeIn 0.4s ease; min-height: 100vh; }
+        .view.active { display: block; }
+        .view-content { padding: 30px 20px; max-width: 600px; margin: 0 auto; }
+
+        /* --- CORE: PERFIL --- */
+        .profile-container { max-width: 600px; margin: 0 auto; }
+        .profile-header { position: relative; width: 100%; }
+        
+        /* Menu de Opções (Denunciar) */
+        .profile-options-btn {
+            position: absolute; top: 20px; right: 20px; z-index: 10;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2); width: 40px; height: 40px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: #fff; cursor: pointer; transition: var(--transition);
+        }
+        .profile-options-btn:hover { background: rgba(0,0,0,0.8); }
+
+        .banner-container { width: 100%; height: 220px; background: #1a1a1a; position: relative; overflow: hidden; }
+        .banner-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .avatar-wrapper {
+            position: absolute; left: 24px; bottom: -50px;
+            width: 110px; height: 110px; border-radius: 50%;
+            border: 5px solid var(--bg); background: #222; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .avatar-img { width: 100%; height: 100%; object-fit: cover; }
+
+        .profile-info { margin-top: 65px; padding: 0 24px; }
+        .profile-meta h2 { font-size: 1.6rem; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px; }
+        .profile-meta p { color: var(--accent); font-weight: 600; font-size: 0.95rem; margin-top: 2px; }
+        .bio-text { margin: 18px 0; font-size: 1rem; line-height: 1.6; color: #e2e8f0; white-space: pre-wrap; }
+
+        /* --- BOTÕES & EDIÇÃO INLINE --- */
+        .action-bar { display: flex; gap: 12px; margin: 25px 0; }
+        .btn { 
+            padding: 14px 24px; border-radius: 12px; font-weight: 700; font-size: 0.9rem; 
+            cursor: pointer; border: 1px solid transparent; transition: var(--transition);
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+        }
+        .btn-primary { background: #fff; color: #000; }
+        .btn-primary:active { transform: scale(0.97); }
+        .btn-secondary { background: var(--surface-light); color: #fff; border-color: var(--border); }
+        .btn-danger { background: rgba(255, 77, 77, 0.1); color: var(--error); border-color: rgba(255, 77, 77, 0.2); }
+
+        .edit-field { 
+            background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+            color: #fff; padding: 12px 16px; border-radius: 10px; width: 100%;
+            margin-bottom: 12px; font-family: inherit; font-size: 0.95rem; display: none; transition: var(--transition);
+        }
+        .edit-field:focus { border-color: var(--accent); outline: none; background: rgba(0,0,0,0.6); }
+        .edit-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; font-weight: 600; }
+        
+        /* Lógica de Alternância Visual (View/Edit) */
+        body.editing .edit-mode-only { display: block; }
+        body.editing .view-mode-only { display: none; }
+        .edit-mode-only { display: none; }
+
+        /* --- LINKS --- */
+        .links-container { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+        .link-card {
+            background: var(--surface); border: 1px solid var(--border);
+            padding: 18px; border-radius: 16px; text-decoration: none;
+            color: #fff; font-weight: 600; display: flex; align-items: center;
+            justify-content: space-between; transition: var(--transition);
+        }
+        .link-card:active { transform: scale(0.98); }
+
+        /* --- FEED POSTS --- */
+        .post-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 20px; margin-bottom: 24px; overflow: hidden;
+        }
+        .post-header { padding: 16px; display: flex; align-items: center; gap: 12px; }
+        .post-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+        .post-user-info h4 { font-size: 0.95rem; font-weight: 700; }
+        .post-user-info span { font-size: 0.8rem; color: var(--text-dim); }
+        .post-img { width: 100%; max-height: 400px; object-fit: cover; background: #111; }
+        .post-body { padding: 16px; }
+        .post-caption { font-size: 0.95rem; line-height: 1.5; margin-bottom: 12px; }
+        .post-actions { display: flex; gap: 16px; border-top: 1px solid var(--border); padding-top: 12px; }
+        .action-btn { background: none; border: none; color: var(--text-dim); display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: color 0.2s; }
+        .action-btn:hover, .action-btn.liked { color: var(--error); }
+
+        /* --- SEARCH INPUT --- */
+        .search-wrapper { position: relative; margin-bottom: 24px; }
+        .search-input {
+            width: 100%; background: var(--surface); border: 1px solid var(--border);
+            padding: 16px 20px 16px 45px; border-radius: 16px; color: #fff; font-size: 1rem;
+        }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-dim); }
+        .user-result-card {
+            display: flex; align-items: center; gap: 15px; padding: 16px;
+            background: var(--surface-light); border: 1px solid var(--border);
+            border-radius: 16px; margin-bottom: 10px; cursor: pointer;
+        }
+
+        /* --- MODAIS COMPLETO --- */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            z-index: 2000; display: flex; align-items: center; justify-content: center;
+            padding: 20px; opacity: 0; visibility: hidden; transition: var(--transition);
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 24px; width: 100%; max-width: 420px; padding: 30px;
+            transform: scale(0.95); transition: var(--transition); max-height: 90vh; overflow-y: auto;
+        }
+        .modal-overlay.active .modal-card { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-title { font-size: 1.3rem; font-weight: 800; font-family: 'Plus Jakarta Sans'; }
+        .close-btn { background: none; border: none; color: var(--text-dim); font-size: 1.5rem; cursor: pointer; }
+
+        /* --- TOAST --- */
+        #toaster { position: fixed; top: 20px; right: 20px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: #1a1a1b; border: 1px solid var(--border); padding: 14px 20px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; display: flex; align-items: center; gap: 10px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div class="bg-canvas"><div class="orb" style="top: -10%; left: -10%;"></div></div>
+
+    <section id="view-profile" class="view active">
+        <div class="profile-container">
+            <div class="profile-header">
+                <button class="profile-options-btn view-mode-only" onclick="openModal('reportModal')" title="Opções do Perfil">
+                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+                </button>
+
+                <div class="banner-container">
+                    <img src="https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=1000" id="displayBanner" class="banner-img">
+                    <div class="edit-mode-only" style="position: absolute; inset:0; background:rgba(0,0,0,0.6); padding: 20px; display:flex; align-items:center;">
+                        <input type="text" id="editBanner" class="edit-field" placeholder="URL da Imagem do Banner" style="margin:0;">
+                    </div>
+                </div>
+                <div class="avatar-wrapper">
+                    <img src="https://ui-avatars.com/api/?name=User&background=6366f1&color=fff" id="displayAvatar" class="avatar-img">
+                    <div class="edit-mode-only" style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.8); padding:5px;">
+                        <input type="text" id="editAvatar" class="edit-field" placeholder="URL da Foto" style="font-size:0.7rem; padding:8px; margin:0;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-info">
+                <div class="profile-meta">
+                    <h2 class="view-mode-only" id="displayName">Carregando... <svg width="20" height="20" fill="var(--accent)" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.4-1.4 2.7 2.7 6.5-6.5 1.4 1.4-8 8z"/></svg></h2>
+                    <div class="edit-mode-only">
+                        <label class="edit-label">Nome de Exibição</label>
+                        <input type="text" id="editName" class="edit-field" placeholder="Seu Nome">
+                    </div>
+                    
+                    <p class="view-mode-only">@<span id="displayUser">username</span></p>
+                    <div class="edit-mode-only" style="margin-top: 15px;">
+                        <label class="edit-label">Nome de Usuário (Regra de 14 dias)</label>
+                        <input type="text" id="editUser" class="edit-field" placeholder="novo.username">
+                        <small id="userCheckFeedback" style="color: var(--warning); font-size: 0.75rem;"></small>
+                    </div>
+                </div>
+
+                <p class="bio-text view-mode-only" id="displayBio">...</p>
+                <div class="edit-mode-only" style="margin-top: 15px;">
+                    <label class="edit-label">Sua Biografia</label>
+                    <textarea id="editBio" class="edit-field" rows="4" placeholder="Conte um pouco sobre você..."></textarea>
+                </div>
+
+                <div class="action-bar">
+                    <button class="btn btn-primary view-mode-only" onclick="toggleEdit(true)">Editar Perfil</button>
+                    
+                    <button class="btn btn-primary edit-mode-only" id="btnSaveProfile" onclick="saveProfile()">
+                        <div class="spinner" id="spinSave"></div>
+                        <span>Salvar Perfil</span>
+                    </button>
+                    <button class="btn btn-secondary edit-mode-only" onclick="toggleEdit(false)">Cancelar</button>
+                </div>
+
+                <h3 style="font-size: 1.1rem; margin-top: 30px; margin-bottom: 10px;">Meus Links</h3>
+                <div class="links-container" id="linksList">
+                    </div>
+                <button class="btn btn-secondary edit-mode-only" style="margin-top: 15px;" onclick="openModal('addLinkModal')">+ Adicionar Link</button>
+            </div>
+        </div>
+    </section>
+
+    <section id="view-feed" class="view">
+        <div class="view-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h1 class="section-title" style="margin:0;">Feed Global</h1>
+                <button class="btn btn-primary" style="padding: 10px 16px; width: auto;" onclick="openModal('createPostModal')">Novo Post</button>
+            </div>
+            
+            <div id="feedContainer">
+                <div class="spinner" id="spinFeed" style="display: block; margin-top: 50px;"></div>
+                </div>
+        </div>
+    </section>
+
+    <section id="view-explore" class="view">
+        <div class="view-content">
+            <h1 class="section-title">Explorar</h1>
+            <div class="search-wrapper">
+                <svg class="search-icon" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" id="searchInput" class="search-input" placeholder="Buscar por @username..." onkeyup="handleSearch()">
+            </div>
+            <div id="searchResults">
+                <div class="empty-state">Digite um @username para buscar perfis.</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="view-settings" class="view">
+        <div class="view-content">
+            <h1 class="section-title">Configurações</h1>
+            <div class="links-container">
+                <button class="link-card" style="width: 100%; border:none;" onclick="openModal('supportModal')"><span>Suporte e Ajuda</span> <span>→</span></button>
+                <button class="link-card" style="width: 100%; border:none;"><span>Termos de Uso</span> <span>→</span></button>
+                <button class="link-card" style="width: 100%; border:none;"><span>Política de Privacidade</span> <span>→</span></button>
+                
+                <a href="suporte-admin.html" class="link-card" id="btnAdminSupport" style="width: 100%; border:none; background: rgba(99, 102, 241, 0.1); color: var(--accent);"><span>Ser Suporte (Admin)</span> <span>→</span></a>
+
+                <button class="link-card" style="width: 100%; border:none; color: var(--error); margin-top: 20px;" onclick="handleLogout()">Sair da Conta</button>
+            </div>
+        </div>
+    </section>
+
+    <nav class="tab-bar">
+        <div class="nav-item active" onclick="switchTab('profile', this)">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <span>Perfil</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('feed', this)">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M4 15h16v-2H4v2zm0 4h16v-2H4v2zm0-8h16V9H4v2zm0-6v2h16V5H4z"/></svg>
+            <span>Feed</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('explore', this)">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <span>Explorar</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('settings', this)">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .43-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.21.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+            <span>Ajustes</span>
+        </div>
+    </nav>
+
+    <div class="modal-overlay" id="supportModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Suporte e Ajuda</h2>
+                <button class="close-btn" onclick="closeModal('supportModal')">✕</button>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 20px;">Como podemos te ajudar? Deixe seu e-mail para recebermos seu contato e respondermos em breve.</p>
+            <input type="email" id="supportEmail" class="edit-field" style="display:block; margin-bottom: 15px;" placeholder="Seu melhor e-mail para contato">
+            <textarea id="supportMessage" class="edit-field" style="display:block; margin-bottom: 15px;" rows="4" placeholder="Descreva seu problema ou dúvida..."></textarea>
+            <button class="btn btn-primary" id="btnSubmitSupport" onclick="submitSupportTicket()">Enviar Mensagem</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title" style="color: var(--error);">Denunciar Perfil</h2>
+                <button class="close-btn" onclick="closeModal('reportModal')">✕</button>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 20px;">Por que você está denunciando este perfil? Nossa equipe revisará em até 24h.</p>
+            <select id="reportReason" class="edit-field" style="display:block; margin-bottom: 15px;">
+                <option value="fake">Perfil Falso ou Impersonação</option>
+                <option value="spam">Spam ou Fraude</option>
+                <option value="inappropriate">Conteúdo Inadequado</option>
+                <option value="other">Outro Motivo</option>
+            </select>
+            <textarea id="reportDetails" class="edit-field" style="display:block;" rows="3" placeholder="Detalhes adicionais (opcional)"></textarea>
+            <button class="btn btn-danger" id="btnSubmitReport" onclick="submitReport()">Enviar Denúncia</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="createPostModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Nova Publicação</h2>
+                <button class="close-btn" onclick="closeModal('createPostModal')">✕</button>
+            </div>
+            <input type="text" id="postImageUrl" class="edit-field" style="display:block;" placeholder="URL da Imagem (Ex: https://...)">
+            <textarea id="postCaption" class="edit-field" style="display:block;" rows="4" placeholder="Escreva uma legenda incrível..."></textarea>
+            <button class="btn btn-primary" id="btnCreatePost" onclick="createPost()">Publicar no Feed</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="addLinkModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title">Novo Link</h2>
+                <button class="close-btn" onclick="closeModal('addLinkModal')">✕</button>
+            </div>
+            <input type="text" id="linkTitle" class="edit-field" style="display:block;" placeholder="Título (Ex: Meu Instagram)">
+            <input type="url" id="linkUrl" class="edit-field" style="display:block;" placeholder="URL (Ex: https://...)">
+            <button class="btn btn-primary" onclick="addLinkToProfile()">Adicionar</button>
+        </div>
+    </div>
+
+    <div id="toaster"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc, collection, addDoc, getDocs, query, orderBy, limit, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // ⚠️ SUBSTITUA PELAS SUAS CHAVES DO FIREBASE
+        const firebaseConfig = { apiKey: "AIzaSyAt_l4DcDiXrCRzDkOtu8PeWoIwMk9Mj38", authDomain: "litz-orignals.firebaseapp.com", projectId: "litz-orignals", storageBucket: "litz-orignals.firebasestorage.app", messagingSenderId: "286693298991", appId: "1:286693298991:web:a139c4637b86a4725a87da" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // VARIÁVEIS GLOBAIS
+        let currentUserDoc = null; 
+        let currentUserId = null;
+        let userLinks = [];
+
+        // --- SISTEMA UI (TABS, MODAIS, TOASTS) ---
+        window.switchTab = (tabId, element) => {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`view-${tabId}`).classList.add('active');
+            element.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            if(tabId === 'feed') loadFeed(); // Carrega o feed ao abrir a aba
+        };
+
+        window.openModal = (id) => document.getElementById(id).classList.add('active');
+        window.closeModal = (id) => document.getElementById(id).classList.remove('active');
+
+        window.pushToast = (msg, type = 'default') => {
+            const t = document.createElement('div'); t.className = 'toast';
+            if(type === 'error') t.style.borderColor = 'var(--error)';
+            if(type === 'success') t.style.borderColor = 'var(--success)';
+            t.innerHTML = msg;
+            document.getElementById('toaster').appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 3000);
+        };
+
+        // --- AUTH & CARREGAMENTO DO PERFIL ---
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUserId = user.uid;
+                loadProfileData();
+            } else {
+                // Se não estiver logado, redireciona pro index (Login)
+                window.location.href = 'index.html'; 
+            }
+        });
+
+        async function loadProfileData() {
+            try {
+                const docSnap = await getDoc(doc(db, "users", currentUserId));
+                if (docSnap.exists()) {
+                    currentUserDoc = docSnap.data();
+                    renderProfile(currentUserDoc);
+                } else {
+                    pushToast("Perfil não encontrado no banco", "error");
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function renderProfile(data) {
+            document.getElementById('displayName').innerHTML = `${data.displayName || data.username} <svg width="20" height="20" fill="var(--accent)" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.9 14.7L6 12.6l1.4-1.4 2.7 2.7 6.5-6.5 1.4 1.4-8 8z"/></svg>`;
+            document.getElementById('displayUser').innerText = data.username;
+            document.getElementById('displayBio').innerText = data.bio || "Nenhuma biografia adicionada.";
+            if(data.bannerURL) document.getElementById('displayBanner').src = data.bannerURL;
+            if(data.photoURL) document.getElementById('displayAvatar').src = data.photoURL;
+            
+            userLinks = data.links || [];
+            renderLinks();
+        }
+
+        function renderLinks() {
+            const container = document.getElementById('linksList');
+            container.innerHTML = '';
+            userLinks.forEach((link, index) => {
+                container.innerHTML += `
+                    <a href="${link.url}" target="_blank" class="link-card">
+                        ${link.title}
+                        <span class="edit-mode-only" style="color:var(--error); font-size:1.2rem;" onclick="event.preventDefault(); removeLink(${index})">🗑️</span>
+                        <span class="view-mode-only">↗</span>
+                    </a>
+                `;
+            });
+        }
+
+        // --- EDIÇÃO DO PERFIL INLINE ---
+        window.toggleEdit = (isEditing) => {
+            if(isEditing) {
+                document.body.classList.add('editing');
+                // Preenche os inputs com os dados atuais
+                document.getElementById('editName').value = currentUserDoc.displayName || currentUserDoc.username;
+                document.getElementById('editBio').value = currentUserDoc.bio || "";
+                document.getElementById('editUser').value = currentUserDoc.username;
+                document.getElementById('editBanner').value = currentUserDoc.bannerURL || "";
+                document.getElementById('editAvatar').value = currentUserDoc.photoURL || "";
+            } else {
+                document.body.classList.remove('editing');
+                document.getElementById('userCheckFeedback').innerText = "";
+            }
+        };
+
+        // Regras estritas de Username (Firestore)
+        window.saveProfile = async () => {
+            const newName = document.getElementById('editName').value;
+            const newBio = document.getElementById('editBio').value;
+            const newUser = document.getElementById('editUser').value.toLowerCase().replace(/[^a-z0-9._]/g, '');
+            const newBanner = document.getElementById('editBanner').value;
+            const newAvatar = document.getElementById('editAvatar').value;
+
+            const btn = document.getElementById('btnSaveProfile');
+            btn.disabled = true; document.getElementById('spinSave').style.display = 'block';
+
+            try {
+                let updates = { displayName: newName, bio: newBio, bannerURL: newBanner, photoURL: newAvatar, links: userLinks };
+
+                // Verifica se tentou mudar o username
+                if(newUser !== currentUserDoc.username) {
+                    const changes = currentUserDoc.usernameChanges || 0;
+                    const lastChange = currentUserDoc.lastUsernameChange?.toMillis() || 0;
+                    const diffDays = (Date.now() - lastChange) / (1000 * 60 * 60 * 24);
+
+                    if (changes >= 4) throw new Error("Limite de 4 trocas de username atingido.");
+                    if (diffDays < 14 && changes > 0) throw new Error(`Aguarde ${Math.ceil(14 - diffDays)} dias para trocar.`);
+
+                    // Checa se o novo username já existe
+                    const q = query(collection(db, "users"), where("username", "==", newUser));
+                    const snap = await getDocs(q);
+                    if(!snap.empty) throw new Error("Username já está em uso.");
+
+                    updates.username = newUser;
+                    updates.usernameChanges = changes + 1;
+                    updates.lastUsernameChange = serverTimestamp();
+                }
+
+                await updateDoc(doc(db, "users", currentUserId), updates);
+                pushToast("Perfil atualizado com sucesso!", "success");
+                await loadProfileData(); // Recarrega
+                toggleEdit(false);
+            } catch (error) {
+                document.getElementById('userCheckFeedback').innerText = error.message;
+                pushToast(error.message, "error");
+            } finally {
+                btn.disabled = false; document.getElementById('spinSave').style.display = 'none';
+            }
+        };
+
+        // --- SISTEMA DE LINKS ---
+        window.addLinkToProfile = () => {
+            const title = document.getElementById('linkTitle').value;
+            const url = document.getElementById('linkUrl').value;
+            if(!title || !url) return pushToast("Preencha título e URL", "error");
+            userLinks.push({ title, url });
+            renderLinks();
+            closeModal('addLinkModal');
+            document.getElementById('linkTitle').value = ''; document.getElementById('linkUrl').value = '';
+        };
+
+        window.removeLink = (index) => {
+            userLinks.splice(index, 1);
+            renderLinks();
+        };
+
+        // --- SISTEMA DE DENÚNCIAS (REPORT PERFIL) ---
+        window.submitReport = async () => {
+            const reason = document.getElementById('reportReason').value;
+            const details = document.getElementById('reportDetails').value;
+            const btn = document.getElementById('btnSubmitReport');
+            
+            btn.innerHTML = "Enviando..."; btn.disabled = true;
+            try {
+                await addDoc(collection(db, "reports"), {
+                    reportedUserId: currentUserId, // Em um app real, seria o ID do perfil visitado
+                    reporterId: auth.currentUser.uid,
+                    reason: reason,
+                    details: details,
+                    status: "pending",
+                    createdAt: serverTimestamp()
+                });
+                pushToast("Denúncia enviada para análise.", "success");
+                closeModal('reportModal');
+            } catch (e) {
+                pushToast("Erro ao enviar denúncia", "error");
+            } finally {
+                btn.innerHTML = "Enviar Denúncia"; btn.disabled = false;
+            }
+        };
+
+        // --- FASE 2: FEED & POSTS ---
+        window.createPost = async () => {
+            const imgUrl = document.getElementById('postImageUrl').value;
+            const caption = document.getElementById('postCaption').value;
+            
+            if(!imgUrl) return pushToast("A imagem é obrigatória", "error");
+            const btn = document.getElementById('btnCreatePost');
+            btn.innerHTML = "Publicando..."; btn.disabled = true;
+
+            try {
+                await addDoc(collection(db, "posts"), {
+                    userId: currentUserId,
+                    username: currentUserDoc.username,
+                    userPhoto: currentUserDoc.photoURL,
+                    imageURL: imgUrl,
+                    caption: caption,
+                    likes: 0,
+                    createdAt: serverTimestamp()
+                });
+                pushToast("Publicado com sucesso!", "success");
+                closeModal('createPostModal');
+                loadFeed(); // Recarrega o feed
+            } catch (e) {
+                pushToast("Erro ao publicar", "error");
+            } finally {
+                btn.innerHTML = "Publicar no Feed"; btn.disabled = false;
+            }
+        };
+
+        window.loadFeed = async () => {
+            const container = document.getElementById('feedContainer');
+            document.getElementById('spinFeed').style.display = 'block';
+            
+            try {
+                const q = query(collection(db, "posts"), orderBy("createdAt", "desc"), limit(10));
+                const snap = await getDocs(q);
+                
+                document.getElementById('spinFeed').style.display = 'none';
+                if(snap.empty) {
+                    container.innerHTML = '<div class="empty-state">Nenhuma publicação encontrada no servidor.</div>';
+                    return;
+                }
+
+                container.innerHTML = '';
+                snap.forEach(doc => {
+                    const post = doc.data();
+                    container.innerHTML += `
+                        <div class="post-card">
+                            <div class="post-header">
+                                <img src="${post.userPhoto || 'https://ui-avatars.com/api/?name='+post.username}" class="post-avatar">
+                                <div class="post-user-info">
+                                    <h4>${post.username}</h4>
+                                    <span>Agora mesmo</span>
+                                </div>
+                            </div>
+                            <img src="${post.imageURL}" class="post-img" onerror="this.style.display='none'">
+                            <div class="post-body">
+                                <p class="post-caption"><strong>${post.username}</strong> ${post.caption}</p>
+                                <div class="post-actions">
+                                    <button class="action-btn" onclick="pushToast('Curtir na Fase 2!', 'success')">🤍 ${post.likes || 0}</button>
+                                    <button class="action-btn">💬 Comentar</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                console.error("Erro Feed:", e);
+                document.getElementById('spinFeed').style.display = 'none';
+                container.innerHTML = '<div class="empty-state">Erro ao carregar o feed. Verifique as regras do Firestore.</div>';
+            }
+        };
+
+        // --- FASE 3: EXPLORAR (BUSCA) ---
+        let searchTimeout;
+        window.handleSearch = () => {
+            clearTimeout(searchTimeout);
+            const val = document.getElementById('searchInput').value.toLowerCase().trim();
+            const resultsDiv = document.getElementById('searchResults');
+
+            if(val.length < 3) {
+                resultsDiv.innerHTML = '<div class="empty-state">Digite pelo menos 3 letras para buscar...</div>';
+                return;
+            }
+
+            searchTimeout = setTimeout(async () => {
+                resultsDiv.innerHTML = '<div class="spinner" style="display:block;"></div>';
+                try {
+                    // Busca simples onde username começa com o valor digitado
+                    const q = query(collection(db, "users"), where("username", ">=", val), where("username", "<=", val + '\uf8ff'), limit(5));
+                    const snap = await getDocs(q);
+                    
+                    if(snap.empty) {
+                        resultsDiv.innerHTML = '<div class="empty-state">Nenhum perfil encontrado.</div>';
+                        return;
+                    }
+
+                    resultsDiv.innerHTML = '';
+                    snap.forEach(doc => {
+                        const user = doc.data();
+                        resultsDiv.innerHTML += `
+                            <div class="user-result-card" onclick="pushToast('Visitar perfis na próxima atualização!', 'success')">
+                                <img src="${user.photoURL || 'https://ui-avatars.com/api/?name='+user.username}" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">
+                                <div>
+                                    <h4 style="font-size:1rem;">${user.displayName || user.username}</h4>
+                                    <span style="font-size:0.8rem; color:var(--text-dim);">@${user.username}</span>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } catch (e) {
+                    resultsDiv.innerHTML = '<div class="empty-state">Erro na busca. O Firestore precisa de um Índice configurado para buscas ">= e <=".</div>';
+                }
+            }, 600);
+        };
+
+        // --- SISTEMA DE SUPORTE (NOVO) ---
+        window.submitSupportTicket = async () => {
+            const email = document.getElementById('supportEmail').value;
+            const message = document.getElementById('supportMessage').value;
+            const btn = document.getElementById('btnSubmitSupport');
+            
+            if(!email || !message) {
+                return pushToast("Preencha o e-mail e a mensagem para continuar.", "error");
+            }
+
+            btn.innerHTML = "Enviando..."; btn.disabled = true;
+            try {
+                await addDoc(collection(db, "support_tickets"), {
+                    userId: currentUserId || "desconhecido",
+                    email: email,
+                    message: message,
+                    status: "open",
+                    createdAt: serverTimestamp()
+                });
+                pushToast("Mensagem enviada com sucesso!", "success");
+                closeModal('supportModal');
+                document.getElementById('supportEmail').value = '';
+                document.getElementById('supportMessage').value = '';
+            } catch (e) {
+                pushToast("Erro ao enviar mensagem.", "error");
+                console.error("Erro suporte:", e);
+            } finally {
+                btn.innerHTML = "Enviar Mensagem"; btn.disabled = false;
+            }
+        };
+
+        // --- LOGOUT ---
+        window.handleLogout = () => {
+            signOut(auth).then(() => {
+                window.location.href = 'index.html';
+            });
+        };
+    </script>
+</body>
+</html>
