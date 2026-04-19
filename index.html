@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nobre RP | Simulador de Vida Real</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        /* =========================================
+           VARIÁVEIS DE CORES (Baseadas na Logo)
+           ========================================= */
+        :root {
+            --bg-dark: #000000;
+            --bg-card: #0a0a0a;
+            --bg-card-hover: #141414;
+            --border-color: #222222;
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --accent: #ffffff;
+            --accent-hover: #cccccc;
+            --transition: all 0.3s ease;
+        }
+
+        /* =========================================
+           RESET E CONFIGURAÇÕES GERAIS
+           ========================================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+        }
+
+        /* Classes de utilidade para animações */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* =========================================
+           NAVBAR
+           ========================================= */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Imagem da logo na Navbar */
+        .logo img {
+            height: 40px;
+            width: auto;
+        }
+
+        .menu-toggle {
+            font-size: 2rem;
+            color: var(--text-main);
+            cursor: pointer;
+            display: block;
+        }
+
+        .nav-links {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            height: 100vh;
+            width: 80%;
+            max-width: 300px;
+            background-color: var(--bg-card);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 80px 30px;
+            transition: 0.4s ease-in-out;
+            z-index: 999;
+        }
+
+        .nav-links.active {
+            right: 0;
+        }
+
+        .nav-links a {
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            font-weight: 500;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-muted);
+            padding-left: 10px;
+        }
+
+        .close-menu {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            opacity: 0;
+            visibility: hidden;
+            transition: 0.3s;
+            z-index: 998;
+        }
+
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* =========================================
+           HERO (BANNER PRINCIPAL)
+           ========================================= */
+        .hero {
+            padding: 150px 5% 80px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: radial-gradient(circle at center, #111111 0%, #000000 100%);
+            position: relative;
+        }
+
+        .hero-img-container {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero h2 {
+            font-size: 1.2rem;
+            font-weight: 400;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .hero p {
+            font-style: italic;
+            color: var(--text-muted);
+            margin-bottom: 40px;
+            max-width: 600px;
+            font-size: 1.1rem;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 350px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 15px 25px;
+            border-radius: 6px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            transition: var(--transition);
+            cursor: pointer;
+            border: 2px solid var(--accent);
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        .btn-primary:hover {
+            background-color: transparent;
+            color: var(--accent);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--accent);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--accent);
+            color: var(--bg-dark);
+        }
+
+        /* =========================================
+           SEÇÕES GERAIS
+           ========================================= */
+        section {
+            padding: 80px 5%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            font-size: 2.5rem;
+            color: var(--text-muted);
+        }
+
+        /* =========================================
+           SOBRE
+           ========================================= */
+        .about-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 40px 30px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .about-box p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .about-box p:last-child {
+            margin-bottom: 0;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        /* =========================================
+           COMO PARTICIPAR
+           ========================================= */
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .step-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: var(--transition);
+        }
+
+        .step-card:hover {
+            transform: translateX(10px);
+            border-color: var(--text-muted);
+        }
+
+        .step-num {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: transparent;
+            -webkit-text-stroke: 1px var(--text-muted);
+        }
+
+        .step-text h3 {
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .step-text p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .participation-note {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        /* =========================================
+           DIFERENCIAIS
+           ========================================= */
+        .diff-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .diff-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+            transition: var(--transition);
+        }
+
+        .diff-card:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .diff-card i {
+            font-size: 2rem;
+            color: var(--accent);
+        }
+
+        .diff-card h3 {
+            font-size: 1.1rem;
+        }
+
+        /* =========================================
+           STATUS DO PROJETO
+           ========================================= */
+        .status-box {
+            background: linear-gradient(135deg, var(--bg-card) 0%, #000000 100%);
+            border: 1px solid var(--border-color);
+            padding: 40px 20px;
+            border-radius: 10px;
+        }
+
+        .status-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .status-item i {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .status-quote {
+            text-align: center;
+            font-style: italic;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+        }
+
+        /* =========================================
+           FAQ (Perguntas Frequentes)
+           ========================================= */
+        .faq-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.95rem;
+            transition: var(--transition);
+        }
+
+        .faq-question:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .faq-question i {
+            transition: transform 0.3s ease;
+        }
+
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            background: #000;
+        }
+
+        .faq-answer p {
+            padding: 0 20px 20px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        /* =========================================
+           CTA FINAL
+           ========================================= */
+        .cta-final {
+            text-align: center;
+            padding: 100px 5%;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 70%);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .cta-final p {
+            font-size: 1.5rem;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            margin-bottom: 40px;
+            line-height: 1.4;
+        }
+
+        .cta-final .btn {
+            margin: 0 auto;
+            max-width: 300px;
+        }
+
+        /* =========================================
+           FOOTER
+           ========================================= */
+        footer {
+            background: #000;
+            border-top: 1px solid var(--border-color);
+            padding: 40px 5%;
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .footer-logo img {
+            height: 30px;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .social-links a {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .social-links a:hover {
+            color: var(--text-main);
+            transform: translateY(-3px);
+        }
+
+        .copyright {
+            color: var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        /* =========================================
+           MEDIA QUERIES (DESKTOP)
+           ========================================= */
+        @media (min-width: 768px) {
+            .menu-toggle {
+                display: none;
+            }
+
+            .nav-links {
+                position: static;
+                height: auto;
+                width: auto;
+                background: transparent;
+                border: none;
+                flex-direction: row;
+                padding: 0;
+                gap: 30px;
+            }
+
+            .nav-links a {
+                margin: 0;
+                font-size: 0.95rem;
+            }
+
+            .nav-links a:hover {
+                padding-left: 0;
+                color: var(--text-main);
+            }
+
+            .close-menu {
+                display: none;
+            }
+
+            .btn-group {
+                flex-direction: row;
+                max-width: 600px;
+            }
+
+            .diff-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .status-list {
+                flex-direction: row;
+                justify-content: space-around;
+                text-align: center;
+            }
+
+            .status-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .hero h1 {
+                font-size: 4.5rem;
+            }
+            
+            .diff-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="overlay" id="overlay"></div>
+
+    <header id="header">
+        <nav class="nav-container">
+            <a href="#inicio" class="logo">
+                <img src="138922.png" alt="Logo Nobre RP" onerror="this.src='https://technological-moccasin-xnkpi0c8yu.edgeone.app/Screenshot_2026-04-18-23-45-14-621_com.discord.jpg'">
+                NOBRE RP
+            </a>
+            
+            <i class="ph ph-list menu-toggle" id="menuBtn"></i>
+
+            <div class="nav-links" id="navLinks">
+                <i class="ph ph-x close-menu" id="closeBtn"></i>
+                <a href="#sobre"><i class="ph ph-info desktop-hide"></i> Sobre</a>
+                <a href="#participar"><i class="ph ph-rocket-launch desktop-hide"></i> Participar</a>
+                <a href="#diferenciais"><i class="ph ph-star desktop-hide"></i> Diferenciais</a>
+                <a href="#faq"><i class="ph ph-question desktop-hide"></i> FAQ</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero" id="inicio">
+            <div class="hero-img-container reveal">
+                <img src="138922.png" alt="Nobre RP Logo" onerror="this.src='https://technological-moccasin-xnkpi0c8yu.edgeone.app/Screenshot_2026-04-18-23-45-14-621_com.discord.jpg'">
+            </div>
+            
+            <div class="badge reveal">
+                <i class="ph ph-barricade"></i> Em Desenvolvimento
+            </div>
+            
+            <h1 class="reveal">NOBRE RP</h1>
+            <h2 class="reveal">Simulador de Vida Real</h2>
+            
+            <p class="reveal">"Estamos criando algo único. Quer fazer parte desde o começo?"</p>
+            
+            <div class="btn-group reveal">
+                <a href="https://discord.gg/SEU_LINK_DISCORD_AQUI" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                    <i class="ph ph-discord-logo"></i> Entrar no Discord
+                </a>
+                <a href="#status" class="btn btn-secondary">
+                    <i class="ph ph-megaphone"></i> Acompanhar Projeto
+                </a>
+            </div>
+        </section>
+
+        <section id="sobre" class="reveal">
+            <div class="section-title">
+                <i class="ph ph-brain"></i>
+                <h2>Sobre o Servidor</h2>
+            </div>
+            <div class="about-box">
+                <p>O Nobre RP é um servidor focado em experiência realista, organização e imersão total no roleplay.</p>
+                <p>Nosso objetivo é criar uma cidade viva, onde cada decisão importa.</p>
+            </div>
+        </section>
+
+        <section id="participar" class="reveal">
+            <div class="section-title">
+                <i class="ph ph-rocket-launch"></i>
+                <h2>Como Participar</h2>
+            </div>
+            
+            <div class="steps-container">
+                <div class="step-card">
+                    <div class="step-num">1</div>
+                    <div class="step-text">
+                        <h3>Entre no Discord</h3>
+                        <p>Acesse nossa comunidade oficial para começar.</p>
+                    </div>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">2</div>
+                    <div class="step-text">
+                        <h3>Acompanhe as Novidades</h3>
+                        <p>Fique por dentro de cada atualização do desenvolvimento.</p>
+                    </div>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">3</div>
+                    <div class="step-text">
+                        <h3>Participe da Abertura</h3>
+                        <p>Garanta sua vaga na cidade no dia do lançamento.</p>
+                    </div>
+                </div>
+            </div>
+
+            <p class="participation-note">(Servidor ainda em desenvolvimento)</p>
+            
+            <div style="display: flex; justify-content: center;">
+                <a href="https://discord.gg/SEU_LINK_DISCORD_AQUI" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width: 100%; max-width: 300px;">
+                    <i class="ph ph-device-mobile"></i> Entrar Agora
+                </a>
+            </div>
+        </section>
+
+        <section id="diferenciais" class="reveal">
+            <div class="section-title">
+                <i class="ph ph-fire"></i>
+                <h2>Diferenciais</h2>
+            </div>
+            
+            <div class="diff-grid">
+                <div class="diff-card">
+                    <i class="ph ph-check-circle"></i>
+                    <h3>Sistema Organizado</h3>
+                </div>
+                <div class="diff-card">
+                    <i class="ph ph-shield-check"></i>
+                    <h3>Administração Ativa</h3>
+                </div>
+                <div class="diff-card">
+                    <i class="ph ph-mask-happy"></i>
+                    <h3>Foco em RP de Qualidade</h3>
+                </div>
+                <div class="diff-card">
+                    <i class="ph ph-trend-up"></i>
+                    <h3>Evolução Constante</h3>
+                </div>
+            </div>
+        </section>
+
+        <section id="status" class="reveal">
+            <div class="section-title">
+                <i class="ph ph-megaphone"></i>
+                <h2>Status do Projeto</h2>
+            </div>
+            
+            <div class="status-box">
+                <div class="status-list">
+                    <div class="status-item">
+                        <i class="ph ph-barricade"></i>
+                        <span>Em desenvolvimento</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="ph ph-wrench"></i>
+                        <span>Sistemas sendo criados</span>
+                    </div>
+                    <div class="status-item">
+                        <i class="ph ph-calendar-blank"></i>
+                        <span>Previsão: Em breve</span>
+                    </div>
+                </div>
+                <p class="status-quote">"Entre agora e acompanhe tudo de perto."</p>
+            </div>
+        </section>
+
+        <section id="faq" class="reveal">
+            <div class="section-title">
+                <i class="ph ph-question"></i>
+                <h2>FAQ Rápido</h2>
+            </div>
+            
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Precisa de experiência?</span>
+                        <i class="ph ph-caret-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p><br>Não. Jogadores novatos e veteranos são bem-vindos. Teremos suporte para quem está começando.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Quando abre?</span>
+                        <i class="ph ph-caret-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p><br>Em breve. Estamos focados em entregar a melhor experiência possível antes de definir uma data oficial.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Como entrar?</span>
+                        <i class="ph ph-caret-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p><br>Todo o processo de entrada, regras e liberação (Whitelist) será feito exclusivamente pelo nosso Discord.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta-final reveal">
+            <p>"Não espere ficar pronto.<br>Vem fazer parte desde o início."</p>
+            <a href="https://discord.gg/SEU_LINK_DISCORD_AQUI" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                <i class="ph ph-discord-logo"></i> Entrar no Discord
+            </a>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-logo">
+            <img src="138922.png" alt="Logo" onerror="this.style.display='none'">
+            NOBRE RP
+        </div>
+        <div class="social-links">
+            <a href="https://discord.gg/SEU_LINK_DISCORD_AQUI" target="_blank" rel="noopener noreferrer" aria-label="Discord"><i class="ph ph-discord-logo"></i></a>
+            <a href="https://instagram.com/SEU_USUARIO_INSTAGRAM" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i class="ph ph-instagram-logo"></i></a>
+        </div>
+        <p class="copyright">NOBRE RP &copy; 2026. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // 1. LÓGICA DO MENU MOBILE
+            const menuBtn = document.getElementById('menuBtn');
+            const closeBtn = document.getElementById('closeBtn');
+            const navLinks = document.getElementById('navLinks');
+            const overlay = document.getElementById('overlay');
+            const menuItems = navLinks.querySelectorAll('a');
+
+            function toggleMenu() {
+                navLinks.classList.toggle('active');
+                overlay.classList.toggle('active');
+                document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : 'auto';
+            }
+
+            menuBtn.addEventListener('click', toggleMenu);
+            closeBtn.addEventListener('click', toggleMenu);
+            overlay.addEventListener('click', toggleMenu);
+
+            // Fechar menu ao clicar em um link
+            menuItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    if(navLinks.classList.contains('active')) {
+                        toggleMenu();
+                    }
+                });
+            });
+
+            // 2. EFEITO NAVBAR SCROLL (Fica menor ao rolar a página)
+            const header = document.getElementById('header');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    header.style.padding = "5px 0";
+                    header.style.boxShadow = "0 4px 30px rgba(0, 0, 0, 0.5)";
+                } else {
+                    header.style.padding = "0";
+                    header.style.boxShadow = "none";
+                }
+            });
+
+            // 3. LÓGICA DO FAQ (Accordion)
+            const faqItems = document.querySelectorAll('.faq-item');
+            
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                
+                question.addEventListener('click', () => {
+                    const isActive = item.classList.contains('active');
+                    
+                    // Fechar todos
+                    faqItems.forEach(faq => {
+                        faq.classList.remove('active');
+                        faq.querySelector('.faq-answer').style.maxHeight = null;
+                    });
+
+                    // Abrir o clicado se não estava ativo
+                    if (!isActive) {
+                        item.classList.add('active');
+                        const answer = item.querySelector('.faq-answer');
+                        answer.style.maxHeight = answer.scrollHeight + "px";
+                    }
+                });
+            });
+
+            // 4. ANIMAÇÕES NO SCROLL (Reveal)
+            function reveal() {
+                const reveals = document.querySelectorAll('.reveal');
+                const windowHeight = window.innerHeight;
+                const elementVisible = 100;
+
+                reveals.forEach(element => {
+                    const elementTop = element.getBoundingClientRect().top;
+                    if (elementTop < windowHeight - elementVisible) {
+                        element.classList.add('active');
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', reveal);
+            // Chama a função uma vez no carregamento para os itens visíveis
+            reveal();
+        });
+    </script>
+</body>
+</html>
